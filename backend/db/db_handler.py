@@ -1,17 +1,18 @@
 from dotenv import load_dotenv
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 
-from backend.db.db_models import Users, Requests
+from backend.db.db_models import Users, UserRead, UserCreate, State
 import os
 
-from fastapi import Depends, FastAPI, HTTPException, Query
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+from fastapi import Depends
+from backend.security.passwords import get_password_hash
+from sqlmodel import Session, SQLModel, create_engine, select
 
 from typing import Annotated
 
 load_dotenv()
 
-engine = create_engine(os.getenv('DATABASE_URL'))
+engine = create_engine(os.getenv('SQLALCHEMY_DATABASE_URL'))
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
@@ -26,46 +27,79 @@ SessionDep = Annotated[Session, Depends(get_session)]
 ## USER RELATED OPERATIONS
 ##
 
-def create_user_db(user: Users,session: SessionDep) -> str:
+# ---------------------
+# User creation
+# ---------------------
+def create_user_db(user: UserCreate,session: SessionDep) -> Users:
     try:
-        db_user = Users.model_validate(user)
+        db_user_create = UserCreate.model_validate(user)
+        hashed_password = get_password_hash(db_user_create.password)
+        db_user = Users(**db_user_create.model_dump(), password_hash=hashed_password)
         session.add(db_user)
         session.commit()
         session.refresh(db_user)
-        return "Success"
+        return db_user
     except Exception:
         session.rollback()
         raise
+# ---------------------
 
-def read_user_db(session: SessionDep):
-    statement = select(Users)
-    results = session.exec(statement)
+
+
+# ---------------------
+# Read users from DB
+# ---------------------
+def read_all_users_db(session: SessionDep):
+    statement = select(UserRead)
+    results = session.exec(statement).all()
     return results
 
-def deactivate_user_db(user_id: str,session:SessionDep):
+def read_user_by_email(email: str, session: SessionDep) -> Users | None:
+    statement = select(Users).where(Users.email == email)
+    user = session.exec(statement).one_or_none()
+    if user:
+        print("Found user: ", user)
+    return user
+
+def read_user_by_id(user_id: int, session: SessionDep) -> Users | None:
     statement = select(Users).where(Users.id == user_id)
-    results = session.exec(statement)
-    user = results.one()
-    print("User to deactivate: ", user)
+    user = session.exec(statement).one_or_none()
+    if user:
+        print("Found user: ", user)
+    return user
+# ---------------------
 
-    if (user.state == "active"):
-        user.state = "deactivated"
-        session.add(user)
-        session.commit()
-        session.refresh(user)
-        print("Deactivated User: ", user)
-    else: return "Nothing to do, user is not active"
 
-def activate_user_db(user_id: str,session:SessionDep):
-    statement = select(Users).where(Users.id == user_id)
-    results = session.exec(statement)
-    user = results.one()
-    print("User to deactivate: ", user)
 
-    if (user.state != "active"):
-        user.state = "activated"
-        session.add(user)
-        session.commit()
-        session.refresh(user)
-        print("Deactivated User: ", user)
-    else: return "Nothing to do, user is active"
+# ---------------------
+# User state management
+# ---------------------
+def activate_user_db(user: Users, session:SessionDep):
+    if (user.state == State.ACTIVE):
+        return user
+    
+    user.state = State.ACTIVE
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return user
+
+def deactivate_user_db(user: Users,session:SessionDep):
+    if user.state == State.DEACTIVATED:
+        return user
+
+    user.state = State.DEACTIVATED
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return user
+
+# ---------------------
+
+
+
+# ---------------------
+# Password hashing and user authentification
+# ---------------------
