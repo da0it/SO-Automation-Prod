@@ -1,52 +1,26 @@
 from fastapi import APIRouter, HTTPException, Depends
-from backend.db.db_handler import SessionDep
-from backend.db.db_models import Users, UserCreate, UserRead
-from backend.db.db_handler import read_all_users_db, deactivate_user_db, activate_user_db, read_user_by_id, read_user_by_email
+from backend.db.db_models import Users, UserRead, Role
+from backend.db.db_handler import read_all_users_db, deactivate_user_db, activate_user_db, read_user_by_id, read_user_by_email, SessionDep
+from typing import Annotated
+from backend.security.auth import get_current_active_user
+from backend.dependencies import require_user_by_id, require_admin_role
 
 users_router = APIRouter(
     prefix="/user",
     tags=["User"]
     )
 
-def require_user_by_id(user_id: int, session: SessionDep) -> Users:
-    user = read_user_by_id(user_id, session)
-
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    return user
-
-def require_user_by_email(email: str, session: SessionDep) -> Users:
-    user = read_user_by_email(email, session)
-
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    return user
-
-@users_router.patch("/activate/", response_model=UserRead | None)
-async def activate_user_endpoint(user_id: int, session: SessionDep):
-    try:
-        activated_user = activate_user_db(user_id, session)
-        return activated_user
-    except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
+@users_router.patch("/activate/", response_model=UserRead)
+async def activate_user_endpoint(user_id: int, admin_user: Annotated[Users, Depends(require_admin_role)], session: SessionDep):
+    user_entity = require_user_by_id(user_id, session)
+    activated_user = activate_user_db(user_entity, session)
+    return activated_user
     
-@users_router.patch("/deactivate/", response_model=UserRead | None)
-async def deactivate_user_endpoint(user_id: str, session: SessionDep):
-    try:
-        deactivated_user = deactivate_user_db(user_id, session)
-        if deactivated_user is None:
-            raise HTTPException(status_code=404, detail="User not found")
-        return deactivated_user
-    except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
+@users_router.patch("/deactivate/", response_model=UserRead)
+async def deactivate_user_endpoint(user_id: str, admin_user: Annotated[Users, Depends(require_admin_role)], session: SessionDep):
+    user_entity = require_user_by_id(user_id, session)
+    deactivated_user = deactivate_user_db(user_entity, session)
+    return deactivated_user
 
 @users_router.get("/all_users/",response_model=list[UserRead])
 async def read_users(session: SessionDep):
