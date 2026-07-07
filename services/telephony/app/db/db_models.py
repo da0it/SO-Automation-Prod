@@ -34,6 +34,7 @@ class CallRecording(BaseCall):
     recording_state: str
     completion_code: str
     timestamp: datetime
+    ai_summary: list[str]
 
 class Transcripts(SQLModel):
     id: int
