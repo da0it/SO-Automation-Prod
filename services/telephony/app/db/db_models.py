@@ -16,28 +16,26 @@ class RecordingState(str, Enum):
     CONTINUED="continued"
     COMPLETED="completed"
 
-class BaseCall(SQLModel):
-    id: str
-    start_time: datetime
-    end_time: datetime
+class MangoCalls(SQLModel, table=True):
+    __tablename__="mango_calls"
 
-class Calls(BaseCall, table=True):
-    __tablename__="calls"
-
-    client_phone_hash: str
-    client_phone_masked: str
-    line_number: str
+    id: str = Field(primary_key=True)
+    created_at: datetime
+    updated_at: datetime = Field(default=None)
+    line_number: str = Field(default=2)
+    client_phone_hash: str | None = None
+    client_phone_masked: str | None = None
     call_state: str
+    sip_call_id: str | None = None
 
-class CallRecording(BaseCall):
+class CallRecording(SQLModel):
     id: str
     recording_state: str
     completion_code: str
     timestamp: datetime
-    ai_summary: list[str]
 
-class Transcripts(SQLModel):
-    id: int
-    call_id: str
-    content: json
-    recieved_at: datetime
+# class Transcripts(SQLModel):
+#     id: int
+#     call_id: str
+#     content: json
+#     recieved_at: datetime

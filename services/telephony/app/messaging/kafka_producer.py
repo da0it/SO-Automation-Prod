@@ -14,6 +14,7 @@ def delivery_report(err, msg):
     else:
         print(f'Message delivered to {msg.topic()} [{msg.partition()}]')
 
-telephony_producer.produce('aaa', value='bbb', callback=delivery_report)
-telephony_producer.flush()
+def produce_event(topic: str, value):
+    telephony_producer.produce(topic, value, callback=delivery_report)
+    telephony_producer.flush()
 

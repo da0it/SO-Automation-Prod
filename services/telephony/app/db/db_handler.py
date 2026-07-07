@@ -1,9 +1,13 @@
-from typing import Annotated
+from typing import Annotated, Any
+from datetime import datetime, timezone
 
 import os
+import json
 
 from fastapi import Depends
-from sqlmodel import Session, create_engine, SQLModel
+from sqlmodel import Session, create_engine, SQLModel, select
+
+from app.db.db_models import MangoCalls
 
 engine = create_engine(os.getenv('SQLALCHEMY_TELEFONY_DATABASE_URL'))
 
@@ -16,4 +20,41 @@ def get_session():
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
-# def change_call_state_db
+def get_call_by_sip_call_id(sip_call_id: str, session: SessionDep) -> MangoCalls | None:
+    return session.exec(
+        select(MangoCalls).where(
+            MangoCalls.sip_call_id == sip_call_id
+        )
+    ).one_or_none()
+
+
+def handle_call_event_bd(payload: dict[str, Any], session: SessionDep):
+    call = get_call_by_sip_call_id(payload["sip_call_id"], session)
+    if call is not None:
+       return update_existing_call_db(call, payload, session)
+    else: 
+        return create_call_db(payload, session)
+
+def create_call_db(payload: dict[str, Any], session: SessionDep) -> MangoCalls:
+    db_call = MangoCalls.model_validate(payload)
+    session.add(db_call)
+    session.commit()
+    session.refresh(db_call)
+    
+    return db_call
+
+def update_existing_call_db(call, payload: dict[str, Any], session: SessionDep):
+    update_data = MangoCalls.model_validate(payload).model_dump(exclude_unset=True,exclude={"id"})
+    for field_name, new_value in update_data.items():
+        old_value = getattr(call, field_name, None)
+
+        if old_value != new_value:
+                setattr(call, field_name, new_value)
+    
+    call.updated_at = datetime.now(timezone.utc)
+
+    session.add(call)
+    session.commit()
+    session.refresh(call)
+    
+    return call

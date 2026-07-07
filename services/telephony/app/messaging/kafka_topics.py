@@ -7,9 +7,17 @@ def create_kafka_topics() -> None:
     })
 
     TOPICS = [
+
+    # Call state changes
     "mango.events.call",
-    "mango.events.recording",
+
+    # Recording state changes
+    "mango.events.call.recording",
+
+    # Recording ended
     "mango.events.summary",
+
+    # Recording is ready for download
     "mango.events.record.added",
     ]
 
