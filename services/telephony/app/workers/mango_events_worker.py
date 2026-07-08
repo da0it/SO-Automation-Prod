@@ -3,6 +3,7 @@ import logging
 import json
 
 from confluent_kafka import Consumer, KafkaException, KafkaError
+from app.db.db_handler import handle_call_event_bd, handle_recording_event_bd
 
 kafka_config = {
     'bootstrap.servers': 'localhost:9092',
@@ -49,10 +50,22 @@ class MangoCallWorker():
             self.consumer.close() 
     
     def handle_call_event(self, validated_payload_raw: str):
-        json.loads(validated_payload_raw)
-        
+        payload = json.loads(validated_payload_raw)
+        try:
+            handle_call_event_bd(payload)
+        except Exception:
+            raise 
+
+
     def handle_recording_event(self, validated_payload_raw: str):
+        payload = json.loads(validated_payload_raw)
+        try:
+            handle_recording_event_bd(payload)
+        except Exception:
+            raise
 
-    def handle_summary_event(self, validated_payload_raw: str):
 
-    def handle_record_added_event(self, validated_payload_raw: str):
+
+    # def handle_summary_event(self, validated_payload_raw: str):
+
+    # def handle_record_added_event(self, validated_payload_raw: str)

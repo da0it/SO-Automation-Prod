@@ -7,7 +7,7 @@ import json
 from fastapi import Depends
 from sqlmodel import Session, create_engine, SQLModel, select
 
-from app.db.db_models import MangoCalls
+from app.db.db_models import MangoCalls, CallRecording
 
 engine = create_engine(os.getenv('SQLALCHEMY_TELEFONY_DATABASE_URL'))
 
@@ -28,6 +28,9 @@ def get_call_by_sip_call_id(sip_call_id: str, session: SessionDep) -> MangoCalls
     ).one_or_none()
 
 
+##
+## CALL EVENT RELATED FUNCTIONS
+##
 def handle_call_event_bd(payload: dict[str, Any], session: SessionDep):
     call = get_call_by_sip_call_id(payload["sip_call_id"], session)
     if call is not None:
@@ -43,7 +46,7 @@ def create_call_db(payload: dict[str, Any], session: SessionDep) -> MangoCalls:
     
     return db_call
 
-def update_existing_call_db(call, payload: dict[str, Any], session: SessionDep):
+def update_existing_call_db(call, payload: dict[str, Any], session: SessionDep) -> MangoCalls:
     update_data = MangoCalls.model_validate(payload).model_dump(exclude_unset=True,exclude={"id"})
     for field_name, new_value in update_data.items():
         old_value = getattr(call, field_name, None)
@@ -58,3 +61,9 @@ def update_existing_call_db(call, payload: dict[str, Any], session: SessionDep):
     session.refresh(call)
     
     return call
+
+
+##
+## RECORDING EVENTS RELATED FUNCTIONS
+##
+def handle_recording_event_bd(payload: dict[str, Any], session: SessionDep) -> CallRecording:
