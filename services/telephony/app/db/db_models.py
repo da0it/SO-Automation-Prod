@@ -29,8 +29,10 @@ class MangoCalls(SQLModel, table=True):
     client_phone_hash: str | None = None
     client_phone_masked: str | None = None
     recording_state: RecordingState = Field(default=RecordingState.STARTED)
+    recording_id: str | None = None
+    transcript_status: str
     call_state: CallState
-    sip_call_id: str | None = None
+    entry_id: str | None = None
 
 class CallTranscript(MangoCalls):
     transcript_result: str
