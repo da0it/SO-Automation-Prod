@@ -12,7 +12,7 @@ from typing import Annotated
 
 load_dotenv()
 
-engine = create_engine(os.getenv('SQLALCHEMY_DATABASE_URL'))
+engine = create_engine(os.getenv('SQLALCHEMY_BACKEND_DATABASE_URL'))
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
@@ -30,7 +30,7 @@ SessionDep = Annotated[Session, Depends(get_session)]
 # ---------------------
 # User creation
 # ---------------------
-def create_user_db(user: UserCreate,session: SessionDep) -> Users:
+def create_user_db(user: UserCreate, session: SessionDep) -> Users:
     try:
         db_user_create = UserCreate.model_validate(user)
         hashed_password = get_password_hash(db_user_create.password)

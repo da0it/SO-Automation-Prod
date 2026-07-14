@@ -28,9 +28,9 @@ class MangoCalls(SQLModel, table=True):
     line_number: str = Field(default=os.getenv('DEFAULT_SUPPORT_LINE_NUMBER'))
     client_phone_hash: str | None = None
     client_phone_masked: str | None = None
-    recording_state: RecordingState = Field(default=RecordingState.STARTED)
+    recording_ready: bool | False = False
     recording_id: str | None = None
-    transcript_status: str
+    transcript_status: str  
     call_state: CallState
     entry_id: str | None = None
 

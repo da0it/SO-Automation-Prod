@@ -1,9 +1,11 @@
-import sys
-import logging
-import json
+import sys, logging, json, httpx, asyncio, os
+    
+from dotenv import load_dotenv
 
 from confluent_kafka import Consumer, KafkaException, KafkaError
-from app.db.db_handler import handle_call_event_bd, handle_recording_event_bd
+from app.db.db_handler import handle_call_event_bd, handle_record_added_event_db, update_existing_call_db, SessionDep
+
+load_dotenv()
 
 kafka_config = {
     'bootstrap.servers': 'localhost:9092',
@@ -17,13 +19,23 @@ topics = ['mango.events.call',
           'mango.events.record.added',
         ]
 
+async def request(client):
+    response = await client.get(os.getenv('MANGO_TRANSCRIPTS_URL'))
+    return response.json()
+
+async def request_transcript():
+    async with httpx.AsyncClient as client:
+        task = request(client)
+        result = await asyncio.gather(task)
+
+        return result
+    
 class MangoCallWorker():
     def __init__(self):
         self.consumer = Consumer(kafka_config)
 
         self.handlers = {
             "mango.events.call": self.handle_call_event,
-            "mango.events.recording": self.handle_recording_event,
             "mango.events.summary": self.handle_summary_event,
             "mango.events.record.added": self.handle_record_added_event,
         }
@@ -49,23 +61,25 @@ class MangoCallWorker():
         finally:
             self.consumer.close() 
     
-    def handle_call_event(self, validated_payload_raw: str):
+    def handle_call_event(self, validated_payload_raw: str, session: SessionDep):
         payload = json.loads(validated_payload_raw)
         try:
-            handle_call_event_bd(payload)
+            handle_call_event_bd(payload, session)
         except Exception:
             raise 
 
-
-    def handle_recording_event(self, validated_payload_raw: str):
+    def handle_record_added_event(self, validated_payload_raw: str, session: SessionDep):
         payload = json.loads(validated_payload_raw)
         try:
-            handle_recording_event_bd(payload)
+            call = handle_record_added_event_db(payload, session)
+            result = request_transcript()
+            if result:
+                new_values = {
+                    "transcript_state": "ready"
+                    }
+                update_existing_call_db(call, params=new_values, session)
+                
         except Exception:
             raise
-
-
-
+        
     # def handle_summary_event(self, validated_payload_raw: str):
-
-    # def handle_record_added_event(self, validated_payload_raw: str)
