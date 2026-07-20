@@ -63,7 +63,7 @@ def create_call_db(payload: dict[str, Any], session: SessionDep) -> MangoCalls:
 def update_existing_call_db(call: MangoCalls,
                             session: SessionDep,
                             payload: dict[str, Any] | None,
-                            params: dict[str, Any] | None) -> MangoCalls:
+                            params: dict[str, Any] = None) -> MangoCalls:
     update_data: dict[str, Any] = {}
 
     if payload is not None:
@@ -93,14 +93,17 @@ def update_existing_call_db(call: MangoCalls,
 def handle_summary_event_db(payload: dict[str, Any] | None,
                             session: SessionDep) -> MangoCalls:
     db_call = get_call_by_entry_id(payload["entry_id"], session)
-    call_final_state = payload["entry_result"]
-   
-    db_call.entry_result = call_final_state
+    if db_call is not None: 
+        try:
+            call_final_state = payload["entry_result"]
+        
+            db_call.entry_result = call_final_state
 
-    session.add(db_call)
-    session.commit()
-    session.refresh(db_call)
-
+            session.add(db_call)
+            session.commit()
+            session.refresh(db_call)
+        except Exception as e:
+            raise print(e)
     return db_call
 
 ##

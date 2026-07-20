@@ -14,11 +14,12 @@ class RecordingState(str, Enum):
     COMPLETED="completed"
 
 class TranscriptState(str, Enum):
+    PENDING="pending"
     NOT_READY="not ready"
     READY="ready"
     FAILED="failed"
 
-class EntryResult(str, Enum):
+class EntryResult(int, Enum):
     FAILURE=0
     SUCCESS=1
 
@@ -29,10 +30,9 @@ class MangoCalls(SQLModel, table=True):
     entry_id: str | None = None
     sip_call_id: str
     entry_result: int = Field(default=EntryResult.FAILURE)
-    # line_number: str = Field(default=os.getenv('DEFAULT_SUPPORT_LINE_NUMBER'))
     recording_ready: bool | False = False
     recording_id: str | None = None
-    transcript_ready: bool | False = False
+    transcript_status: str = Field(default=TranscriptState.NOT_READY)
     created_at: datetime
     updated_at: datetime = Field(default=None)
 

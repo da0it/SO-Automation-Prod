@@ -19,18 +19,24 @@ def create_kafka_topics() -> None:
 
     # Recording is ready for download
     "mango.events.record.added",
+
+    # Transcript ready
+    "mango.events.transcript.ready"
     ]
 
     PARTITIONS_COUNT = 1
     REPLICATION_FACTOR = 1
+    topics = []
 
-    topics = [
-        NewTopic(
-            topic=topic_name,
-            num_partitions=PARTITIONS_COUNT,
-            replication_factor=REPLICATION_FACTOR,
+    for topic in EXTERNAL_TOPICS:
+        topics.append(
+            NewTopic(
+                topic=topic,
+                num_partitions=PARTITIONS_COUNT,
+                replication_factor=REPLICATION_FACTOR,
+            )
         )
-    ]
+        
 
     futures = admin_client.create_topics(topics)
 

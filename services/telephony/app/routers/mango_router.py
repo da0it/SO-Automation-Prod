@@ -50,4 +50,9 @@ async def mango_recieve_recording(vpbx_api_key: str = Form(...),
                                   sign: str = Form(...),
                                   raw_json: str = Form(..., alias="json")):
     validated_payload = mango_validate_request(vpbx_api_key, sign, raw_json)
+
+    # Запись звонка добавлена
     produce_event("mango.events.record.added", validated_payload)
+
+    # Можно пробовать забрать транскрипт с сервера
+    produce_event("mango.events.transcript.grab", validated_payload)
