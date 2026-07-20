@@ -19,6 +19,12 @@ class TranscriptState(str, Enum):
     READY="ready"
     FAILED="failed"
 
+class RecordingState(str, Enum):
+    READY="ready"
+    PENDING="pending"
+    NOT_RECORDED="not recorded"
+    FAILED="failed"
+
 class EntryResult(int, Enum):
     FAILURE=0
     SUCCESS=1
@@ -29,8 +35,8 @@ class MangoCalls(SQLModel, table=True):
     id: str = Field(primary_key=True)
     entry_id: str | None = None
     sip_call_id: str
-    entry_result: int = Field(default=EntryResult.FAILURE)
-    recording_ready: bool | False = False
+    entry_result: int = Field(default=None)
+    recording_state: str = Field(default=RecordingState.NOT_RECORDED)
     recording_id: str | None = None
     transcript_status: str = Field(default=TranscriptState.NOT_READY)
     created_at: datetime

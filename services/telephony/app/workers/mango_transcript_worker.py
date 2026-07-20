@@ -21,7 +21,6 @@ topics = [
     "mango.events.record.added"
 ]
 
-
 # Retry Policy
 retry = Retry(total=5, total_timeout=30)
 transport = RetryTransport(retry=retry)
@@ -64,7 +63,7 @@ class MangoTranscriptWorker():
     def handle_transcript_event(self, session, payload: str = None):
         json_payload = json.loads(payload)
         response = self.request_transcript(json_payload["recording_id"])
-
+        tried_to_update = 0
         if response.get("result") == 1000 and response.get("data"):
             call = get_call_by_entry_id(json_payload['entry_id'],session)
             
@@ -78,7 +77,7 @@ class MangoTranscriptWorker():
             update_existing_call_db(call,
                                     session,
                                     payload=None,
-                                    params={"transcript_state": TranscriptState.PENDING},
+                                    params={"transcript_state": TranscriptState.FAILED},
                 )
 
         
