@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-from fastapi import Depends
 
 from app.db.db_models import Users, UserRead, UserCreate, State
 import os

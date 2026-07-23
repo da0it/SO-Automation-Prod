@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Form
 
-from app.messaging.kafka_producer import produce_event
+from services.infrastructure.kafka.kafka_producer import produce_event
 
 from fastapi import HTTPException
 from hashlib import sha256
@@ -53,6 +53,3 @@ async def mango_recieve_recording(vpbx_api_key: str = Form(...),
 
     # Запись звонка добавлена
     produce_event("mango.events.record.added", validated_payload)
-
-    # Можно пробовать забрать транскрипт с сервера
-    produce_event("mango.events.transcript.grab", validated_payload)

@@ -6,7 +6,7 @@ def create_kafka_topics() -> None:
         "bootstrap.servers": "localhost:9092"
     })
 
-    EXTERNAL_TOPICS = [
+    SYSTEM_TOPICS = [
 
     # Call state changes
     "mango.events.call",
@@ -21,16 +21,18 @@ def create_kafka_topics() -> None:
     "mango.events.record.added",
 
     # Transcript state
-    "telephony.transcript.state.ready",
-    "telephony.transcript.state.failed",
-    "telephony.transcript.state.pending"
+    "telephony.transcript.state"
+
+    # AI Analysis state
+    "ai.analysis.state"
+    
     ]
 
     PARTITIONS_COUNT = 1
     REPLICATION_FACTOR = 1
     topics = []
 
-    for topic in EXTERNAL_TOPICS:
+    for topic in SYSTEM_TOPICS:
         topics.append(
             NewTopic(
                 topic=topic,
@@ -38,7 +40,6 @@ def create_kafka_topics() -> None:
                 replication_factor=REPLICATION_FACTOR,
             )
         )
-        
 
     futures = admin_client.create_topics(topics)
 

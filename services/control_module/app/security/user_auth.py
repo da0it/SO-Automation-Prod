@@ -14,8 +14,6 @@ import jwt
 from app.db.db_models import Users, State, TokenData
 from app.db.db_handler import read_user_by_email, SessionDep
 
-
-
 load_dotenv()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")

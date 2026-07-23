@@ -7,7 +7,7 @@ import json
 from fastapi import Depends
 from sqlmodel import Session, create_engine, SQLModel, select
 
-from app.db.db_models import MangoCalls, RecordingState
+from app.db.db_models import MangoCalls, RecordingState, AiAnalysisState
 
 engine = create_engine(os.getenv('SQLALCHEMY_TELEFONY_DATABASE_URL'))
 
@@ -118,6 +118,24 @@ def handle_record_added_event_db(payload: dict[str, Any], session: SessionDep) -
     
     db_call.recording_ready = True
     db_call.recording_id = payload["recording_id"]
+
+    session.add(db_call)
+    session.commit()
+    session.refresh(db_call)
+
+    return db_call
+
+
+## 
+## AI ANALYSIS STATE
+##
+def update_ai_analysis_state_db(payload: dict[str, Any], session: SessionDep) -> MangoCalls:
+    db_call = get_call_by_entry_id(payload["entry_id"], session)
+
+    if db_call is None:
+        raise CallNotFoundForRecording
+    
+    db_call.ai_analysis_state = AiAnalysisState(payload["state"])
 
     session.add(db_call)
     session.commit()
