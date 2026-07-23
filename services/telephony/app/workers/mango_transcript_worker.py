@@ -81,7 +81,7 @@ class MangoTranscriptWorker():
                 )
 
         
-        self.producer.produce(topic="mango.events.record.added", value=response)
+        self.producer.produce(topic="mango.events.transcript.ready", value=response)
 
  
     def request_transcript(self, session, recording_id: str) -> dict:

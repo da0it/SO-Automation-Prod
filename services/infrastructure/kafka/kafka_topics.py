@@ -20,8 +20,10 @@ def create_kafka_topics() -> None:
     # Recording is ready for download
     "mango.events.record.added",
 
-    # Transcript ready
-    "mango.events.transcript.ready"
+    # Transcript state
+    "telephony.transcript.state.ready",
+    "telephony.transcript.state.failed",
+    "telephony.transcript.state.pending"
     ]
 
     PARTITIONS_COUNT = 1
